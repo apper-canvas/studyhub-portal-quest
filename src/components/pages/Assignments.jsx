@@ -84,7 +84,6 @@ const sortedAssignments = [...filteredAssignments].sort((a, b) => {
             <div className="absolute inset-0 border-4 border-primary-600 rounded-full border-t-transparent animate-spin"></div>
           </div>
           <p className="text-gray-600 font-medium">Loading...</p>
-        </div>
 </div>
       </div>
     );

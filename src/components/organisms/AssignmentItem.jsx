@@ -95,7 +95,6 @@ onClick={() => onDelete(assignment.Id)}
               )}
             </div>
           </div>
-        </div>
 </div>
       </motion.div>
 
