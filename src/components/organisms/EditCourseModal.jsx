@@ -4,29 +4,28 @@ import Button from "@/components/atoms/Button";
 import ApperIcon from "@/components/ApperIcon";
 import FormField from "@/components/molecules/FormField";
 import ColorPicker from "@/components/molecules/ColorPicker";
-import { storage } from "@/utils/storage";
 
 const EditCourseModal = ({ course, onClose, onSave }) => {
-  const [formData, setFormData] = useState({
-    code: course.code,
-    name: course.name,
-    instructor: course.instructor,
-    credits: course.credits,
-    color: course.color,
+const [formData, setFormData] = useState({
+    code_c: course.code_c,
+    name_c: course.name_c,
+    instructor_c: course.instructor_c,
+    credits_c: course.credits_c,
+    color_c: course.color_c,
   });
 
   const [errors, setErrors] = useState({});
 
-  const validate = () => {
+const validate = () => {
     const newErrors = {};
-    if (!formData.code.trim()) newErrors.code = "Course code is required";
-    if (!formData.name.trim()) newErrors.name = "Course name is required";
-    if (!formData.instructor.trim()) newErrors.instructor = "Instructor name is required";
-    if (formData.credits < 1 || formData.credits > 6) newErrors.credits = "Credits must be between 1 and 6";
+    if (!formData.code_c.trim()) newErrors.code_c = "Course code is required";
+    if (!formData.name_c.trim()) newErrors.name_c = "Course name is required";
+    if (!formData.instructor_c.trim()) newErrors.instructor_c = "Instructor name is required";
+    if (formData.credits_c < 1 || formData.credits_c > 6) newErrors.credits_c = "Credits must be between 1 and 6";
     return newErrors;
   };
 
-  const handleSubmit = (e) => {
+const handleSubmit = async (e) => {
     e.preventDefault();
     const newErrors = validate();
     
@@ -35,14 +34,7 @@ const EditCourseModal = ({ course, onClose, onSave }) => {
       return;
     }
 
-    const courses = storage.getCourses();
-    const updatedCourses = courses.map(c => 
-      c.Id === course.Id ? { ...c, ...formData } : c
-    );
-    
-    storage.setCourses(updatedCourses);
-    toast.success("Course updated successfully!");
-    onSave(updatedCourses);
+    await onSave(course.Id, formData);
     onClose();
   };
 
@@ -67,44 +59,44 @@ const EditCourseModal = ({ course, onClose, onSave }) => {
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
-          <FormField
+<FormField
             label="Course Code"
-            value={formData.code}
-            onChange={(e) => handleChange("code", e.target.value)}
-            error={errors.code}
+            value={formData.code_c}
+            onChange={(e) => handleChange("code_c", e.target.value)}
+            error={errors.code_c}
           />
 
-          <FormField
+<FormField
             label="Course Name"
-            value={formData.name}
-            onChange={(e) => handleChange("name", e.target.value)}
-            error={errors.name}
+            value={formData.name_c}
+            onChange={(e) => handleChange("name_c", e.target.value)}
+            error={errors.name_c}
           />
 
-          <FormField
+<FormField
             label="Instructor"
-            value={formData.instructor}
-            onChange={(e) => handleChange("instructor", e.target.value)}
-            error={errors.instructor}
+            value={formData.instructor_c}
+            onChange={(e) => handleChange("instructor_c", e.target.value)}
+            error={errors.instructor_c}
           />
 
-          <FormField
+<FormField
             label="Credits"
             type="number"
             min="1"
             max="6"
-            value={formData.credits}
-            onChange={(e) => handleChange("credits", parseInt(e.target.value))}
-            error={errors.credits}
+            value={formData.credits_c}
+            onChange={(e) => handleChange("credits_c", parseInt(e.target.value))}
+            error={errors.credits_c}
           />
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Course Color
             </label>
-            <ColorPicker
-              value={formData.color}
-              onChange={(color) => handleChange("color", color)}
+<ColorPicker
+              value={formData.color_c}
+              onChange={(color) => handleChange("color_c", color)}
             />
           </div>
 

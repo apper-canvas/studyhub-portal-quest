@@ -4,29 +4,28 @@ import Button from "@/components/atoms/Button";
 import ApperIcon from "@/components/ApperIcon";
 import FormField from "@/components/molecules/FormField";
 import ColorPicker from "@/components/molecules/ColorPicker";
-import { storage } from "@/utils/storage";
 
 const AddCourseModal = ({ onClose, onSave }) => {
-  const [formData, setFormData] = useState({
-    code: "",
-    name: "",
-    instructor: "",
-    credits: 3,
-    color: "#3b82f6",
+const [formData, setFormData] = useState({
+    code_c: "",
+    name_c: "",
+    instructor_c: "",
+    credits_c: 3,
+    color_c: "#3b82f6",
   });
 
   const [errors, setErrors] = useState({});
 
-  const validate = () => {
+const validate = () => {
     const newErrors = {};
-    if (!formData.code.trim()) newErrors.code = "Course code is required";
-    if (!formData.name.trim()) newErrors.name = "Course name is required";
-    if (!formData.instructor.trim()) newErrors.instructor = "Instructor name is required";
-    if (formData.credits < 1 || formData.credits > 6) newErrors.credits = "Credits must be between 1 and 6";
+    if (!formData.code_c.trim()) newErrors.code_c = "Course code is required";
+    if (!formData.name_c.trim()) newErrors.name_c = "Course name is required";
+    if (!formData.instructor_c.trim()) newErrors.instructor_c = "Instructor name is required";
+    if (formData.credits_c < 1 || formData.credits_c > 6) newErrors.credits_c = "Credits must be between 1 and 6";
     return newErrors;
   };
 
-  const handleSubmit = (e) => {
+const handleSubmit = async (e) => {
     e.preventDefault();
     const newErrors = validate();
     
@@ -35,22 +34,7 @@ const AddCourseModal = ({ onClose, onSave }) => {
       return;
     }
 
-    const courses = storage.getCourses();
-    const maxId = courses.length > 0 ? Math.max(...courses.map(c => c.Id)) : 0;
-    
-    const newCourse = {
-      Id: maxId + 1,
-      id: `course-${maxId + 1}`,
-      ...formData,
-      semester: storage.getSemester().name,
-      archived: false,
-    };
-
-    const updatedCourses = [...courses, newCourse];
-    storage.setCourses(updatedCourses);
-    
-    toast.success("Course added successfully!");
-    onSave(updatedCourses);
+    await onSave(formData);
     onClose();
   };
 
@@ -75,47 +59,47 @@ const AddCourseModal = ({ onClose, onSave }) => {
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
-          <FormField
+<FormField
             label="Course Code"
-            value={formData.code}
-            onChange={(e) => handleChange("code", e.target.value)}
+            value={formData.code_c}
+            onChange={(e) => handleChange("code_c", e.target.value)}
             placeholder="e.g., CS101"
-            error={errors.code}
+            error={errors.code_c}
           />
 
-          <FormField
+<FormField
             label="Course Name"
-            value={formData.name}
-            onChange={(e) => handleChange("name", e.target.value)}
+            value={formData.name_c}
+            onChange={(e) => handleChange("name_c", e.target.value)}
             placeholder="e.g., Introduction to Computer Science"
-            error={errors.name}
+            error={errors.name_c}
           />
 
-          <FormField
+<FormField
             label="Instructor"
-            value={formData.instructor}
-            onChange={(e) => handleChange("instructor", e.target.value)}
+            value={formData.instructor_c}
+            onChange={(e) => handleChange("instructor_c", e.target.value)}
             placeholder="e.g., Dr. Smith"
-            error={errors.instructor}
+            error={errors.instructor_c}
           />
 
-          <FormField
+<FormField
             label="Credits"
             type="number"
             min="1"
             max="6"
-            value={formData.credits}
-            onChange={(e) => handleChange("credits", parseInt(e.target.value))}
-            error={errors.credits}
+            value={formData.credits_c}
+            onChange={(e) => handleChange("credits_c", parseInt(e.target.value))}
+            error={errors.credits_c}
           />
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Course Color
             </label>
-            <ColorPicker
-              value={formData.color}
-              onChange={(color) => handleChange("color", color)}
+<ColorPicker
+              value={formData.color_c}
+              onChange={(color) => handleChange("color_c", color)}
             />
           </div>
 

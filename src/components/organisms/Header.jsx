@@ -1,19 +1,24 @@
 import { NavLink } from "react-router-dom";
-import { cn } from "@/utils/cn";
+import React, { useContext } from "react";
+import { AuthContext } from "@/App";
 import ApperIcon from "@/components/ApperIcon";
-import { storage } from "@/utils/storage";
-
+import { cn } from "@/utils/cn";
 const Header = () => {
-  const semester = storage.getSemester();
+  const { logout } = useContext(AuthContext);
 
-  const navItems = [
+  const handleLogout = async () => {
+    if (window.confirm('Are you sure you want to logout?')) {
+      await logout();
+    }
+  };
+
+const navItems = [
     { path: "/dashboard", label: "Dashboard", icon: "LayoutDashboard" },
     { path: "/courses", label: "Courses", icon: "BookOpen" },
     { path: "/assignments", label: "Assignments", icon: "CheckSquare" },
     { path: "/grades", label: "Grades", icon: "Award" },
   ];
-
-  return (
+return (
     <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
@@ -24,7 +29,7 @@ const Header = () => {
               </div>
               <div>
                 <h1 className="text-xl font-bold text-gray-900">StudyHub</h1>
-                <p className="text-xs text-gray-500">{semester.name}</p>
+                <p className="text-xs text-gray-500">Fall 2024</p>
               </div>
             </div>
 
@@ -55,6 +60,13 @@ const Header = () => {
             </button>
             <button className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 transition-colors duration-200">
               <ApperIcon name="Settings" size={20} />
+            </button>
+            <button 
+              onClick={handleLogout}
+              className="flex items-center gap-2 px-3 py-2 rounded-lg text-gray-600 hover:bg-red-50 hover:text-red-600 transition-colors duration-200"
+            >
+              <ApperIcon name="LogOut" size={20} />
+              <span className="hidden sm:inline text-sm font-medium">Logout</span>
             </button>
           </div>
         </div>

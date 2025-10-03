@@ -1,23 +1,49 @@
-import { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import Card from "@/components/atoms/Card";
-import Badge from "@/components/atoms/Badge";
+import { courseService } from "@/services/api/courseService";
+import { assignmentService } from "@/services/api/assignmentService";
 import ApperIcon from "@/components/ApperIcon";
 import Empty from "@/components/ui/Empty";
-import { storage } from "@/utils/storage";
-import { calculateCourseGrade, gradeToLetter } from "@/utils/calculations";
+import Loading from "@/components/ui/Loading";
+import Assignments from "@/components/pages/Assignments";
+import Badge from "@/components/atoms/Badge";
+import Card from "@/components/atoms/Card";
 import { formatDate } from "@/utils/dateUtils";
+import { calculateCourseGrade, gradeToLetter } from "@/utils/calculations";
 
 const Grades = () => {
   const [courses, setCourses] = useState([]);
   const [assignments, setAssignments] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [expandedCourse, setExpandedCourse] = useState(null);
 
   useEffect(() => {
-    setCourses(storage.getCourses());
-    setAssignments(storage.getAssignments());
+    const loadData = async () => {
+      setLoading(true);
+      const [coursesData, assignmentsData] = await Promise.all([
+        courseService.getAllCourses(),
+        assignmentService.getAllAssignments()
+      ]);
+      setCourses(coursesData);
+      setAssignments(assignmentsData);
+      setLoading(false);
+    };
+    loadData();
   }, []);
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="flex flex-col items-center gap-4">
+          <div className="relative w-16 h-16">
+            <div className="absolute inset-0 border-4 border-primary-200 rounded-full"></div>
+            <div className="absolute inset-0 border-4 border-primary-600 rounded-full border-t-transparent animate-spin"></div>
+          </div>
+          <p className="text-gray-600 font-medium">Loading...</p>
+        </div>
+      </div>
+);
+  }
   const container = {
     hidden: { opacity: 0 },
     show: {
@@ -58,10 +84,12 @@ const Grades = () => {
         animate="show"
         className="space-y-4"
       >
-        {courses.map((course) => {
-          const courseAssignments = assignments.filter(a => a.courseId === course.id);
+{courses.map((course) => {
+          const courseAssignments = assignments.filter(a => 
+            a.course_id_c?.Id === course.Id || a.course_id_c?.Id === course.id_c
+          );
           const gradedAssignments = courseAssignments.filter(a => 
-            a.earnedPoints !== null && a.totalPoints !== null
+            a.earned_points_c !== null && a.total_points_c !== null
           );
           const grade = calculateCourseGrade(courseAssignments);
           const letterGrade = grade !== null ? gradeToLetter(grade) : "N/A";
@@ -77,13 +105,13 @@ const Grades = () => {
                   <div className="flex items-center gap-4">
                     <div
                       className="w-2 h-16 rounded-full"
-                      style={{ backgroundColor: course.color }}
+                      style={{ backgroundColor: course.color_c }}
                     />
                     <div className="flex-1">
-                      <h3 className="text-lg font-bold text-gray-900">{course.code}</h3>
-                      <p className="text-sm text-gray-600">{course.name}</p>
+                      <h3 className="text-lg font-bold text-gray-900">{course.code_c}</h3>
+                      <p className="text-sm text-gray-600">{course.name_c}</p>
                       <div className="flex items-center gap-2 mt-2">
-                        <Badge variant="primary">{course.credits} Credits</Badge>
+                        <Badge variant="primary">{course.credits_c} Credits</Badge>
                         <Badge variant="info">
                           {gradedAssignments.length} of {courseAssignments.length} Graded
                         </Badge>
@@ -113,7 +141,7 @@ const Grades = () => {
                     <h4 className="font-semibold text-gray-900 mb-4">Graded Assignments</h4>
                     <div className="space-y-3">
                       {gradedAssignments.map((assignment) => {
-                        const percentage = (assignment.earnedPoints / assignment.totalPoints) * 100;
+                        const percentage = (assignment.earned_points_c / assignment.total_points_c) * 100;
                         const assignmentGrade = gradeToLetter(percentage);
 
                         return (
@@ -122,16 +150,16 @@ const Grades = () => {
                             className="flex items-center justify-between p-3 rounded-lg bg-gray-50"
                           >
                             <div className="flex-1">
-                              <p className="font-medium text-gray-900">{assignment.title}</p>
+                              <p className="font-medium text-gray-900">{assignment.title_c}</p>
                               <p className="text-sm text-gray-500 mt-1">
-                                Due: {formatDate(assignment.dueDate)}
+                                Due: {formatDate(assignment.due_date_c)}
                               </p>
                             </div>
                             <div className="text-right">
                               <div className="flex items-center gap-3">
                                 <div>
                                   <p className="text-sm text-gray-600">
-                                    {assignment.earnedPoints} / {assignment.totalPoints} pts
+                                    {assignment.earned_points_c} / {assignment.total_points_c} pts
                                   </p>
                                   <p className="text-xs text-gray-500">{percentage.toFixed(1)}%</p>
                                 </div>

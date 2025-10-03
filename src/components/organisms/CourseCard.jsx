@@ -1,11 +1,11 @@
 import { motion } from "framer-motion";
-import { useState } from "react";
-import Card from "@/components/atoms/Card";
-import Badge from "@/components/atoms/Badge";
+import React, { useState } from "react";
 import ApperIcon from "@/components/ApperIcon";
-import { gradeToLetter } from "@/utils/calculations";
 import EditCourseModal from "@/components/organisms/EditCourseModal";
 import DeleteCourseModal from "@/components/organisms/DeleteCourseModal";
+import Badge from "@/components/atoms/Badge";
+import Card from "@/components/atoms/Card";
+import { gradeToLetter } from "@/utils/calculations";
 
 const CourseCard = ({ course, grade, onUpdate, onDelete }) => {
   const [showEditModal, setShowEditModal] = useState(false);
@@ -23,14 +23,14 @@ const CourseCard = ({ course, grade, onUpdate, onDelete }) => {
         <Card className="relative overflow-hidden">
           <div 
             className="absolute left-0 top-0 bottom-0 w-1"
-            style={{ backgroundColor: course.color }}
+style={{ backgroundColor: course.color_c }}
           />
           
           <div className="pl-3">
             <div className="flex items-start justify-between mb-3">
               <div className="flex-1">
-                <h3 className="text-lg font-bold text-gray-900 mb-1">{course.code}</h3>
-                <p className="text-sm text-gray-600">{course.name}</p>
+<h3 className="text-lg font-bold text-gray-900 mb-1">{course.code_c}</h3>
+                <p className="text-sm text-gray-600">{course.name_c}</p>
               </div>
               <div className="flex items-center gap-2">
                 <button
@@ -49,13 +49,13 @@ const CourseCard = ({ course, grade, onUpdate, onDelete }) => {
             </div>
 
             <div className="flex items-center gap-2 mb-3">
-              <ApperIcon name="User" size={14} className="text-gray-400" />
-              <span className="text-sm text-gray-600">{course.instructor}</span>
+<ApperIcon name="User" size={14} className="text-gray-400" />
+              <span className="text-sm text-gray-600">{course.instructor_c}</span>
             </div>
 
             <div className="flex items-center justify-between pt-3 border-t border-gray-100">
               <div className="flex items-center gap-3">
-                <Badge variant="primary">{course.credits} Credits</Badge>
+<Badge variant="primary">{course.credits_c} Credits</Badge>
               </div>
               <div className="text-right">
                 <div className="text-2xl font-bold text-gray-900">{letterGrade}</div>
@@ -67,14 +67,13 @@ const CourseCard = ({ course, grade, onUpdate, onDelete }) => {
       </motion.div>
 
       {showEditModal && (
-        <EditCourseModal
+<EditCourseModal
           course={course}
           onClose={() => setShowEditModal(false)}
           onSave={onUpdate}
         />
       )}
-
-      {showDeleteModal && (
+{showDeleteModal && (
         <DeleteCourseModal
           course={course}
           onClose={() => setShowDeleteModal(false)}

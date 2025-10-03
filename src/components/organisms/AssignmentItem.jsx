@@ -1,35 +1,32 @@
 import { motion } from "framer-motion";
-import { useState } from "react";
-import Badge from "@/components/atoms/Badge";
-import Checkbox from "@/components/atoms/Checkbox";
+import React, { useState } from "react";
+import { assignmentService } from "@/services/api/assignmentService";
 import ApperIcon from "@/components/ApperIcon";
 import PriorityIndicator from "@/components/molecules/PriorityIndicator";
-import { formatDate, isOverdue, isDueSoon, isDueToday } from "@/utils/dateUtils";
 import EditAssignmentModal from "@/components/organisms/EditAssignmentModal";
-import { storage } from "@/utils/storage";
+import Badge from "@/components/atoms/Badge";
+import Checkbox from "@/components/atoms/Checkbox";
+import { formatDate, isDueSoon, isDueToday, isOverdue } from "@/utils/dateUtils";
 
-const AssignmentItem = ({ assignment, onUpdate, onDelete }) => {
+const AssignmentItem = ({ assignment, courses, onUpdate, onDelete }) => {
   const [showEditModal, setShowEditModal] = useState(false);
-  const courses = storage.getCourses();
-  const course = courses.find(c => c.id === assignment.courseId);
-
+  const course = courses.find(c => c.Id === assignment.course_id_c?.Id || c.id_c === assignment.course_id_c?.Id);
   const handleToggleComplete = () => {
-    onUpdate(assignment.id, { ...assignment, completed: !assignment.completed });
+onUpdate(assignment.Id, { completed_c: !assignment.completed_c });
   };
-
   const getDateBadgeVariant = () => {
-    if (assignment.completed) return "success";
-    if (isOverdue(assignment.dueDate)) return "danger";
-    if (isDueToday(assignment.dueDate)) return "warning";
-    if (isDueSoon(assignment.dueDate)) return "info";
+if (assignment.completed_c) return "success";
+    if (isOverdue(assignment.due_date_c)) return "danger";
+    if (isDueToday(assignment.due_date_c)) return "warning";
+    if (isDueSoon(assignment.due_date_c)) return "info";
     return "default";
   };
 
   const getDateBadgeLabel = () => {
-    if (assignment.completed) return "Completed";
-    if (isOverdue(assignment.dueDate)) return "Overdue";
-    if (isDueToday(assignment.dueDate)) return "Due Today";
-    return formatDate(assignment.dueDate);
+    if (assignment.completed_c) return "Completed";
+    if (isOverdue(assignment.due_date_c)) return "Overdue";
+    if (isDueToday(assignment.due_date_c)) return "Due Today";
+    return formatDate(assignment.due_date_c);
   };
 
   return (
@@ -51,11 +48,11 @@ const AssignmentItem = ({ assignment, onUpdate, onDelete }) => {
           <div className="flex-1">
             <div className="flex items-start justify-between mb-2">
               <div className="flex-1">
-                <h3 className={`text-lg font-semibold ${assignment.completed ? "line-through text-gray-400" : "text-gray-900"}`}>
-                  {assignment.title}
+<h3 className={`text-lg font-semibold ${assignment.completed_c ? "line-through text-gray-400" : "text-gray-900"}`}>
+                  {assignment.title_c}
                 </h3>
-                {assignment.description && (
-                  <p className="text-sm text-gray-600 mt-1">{assignment.description}</p>
+{assignment.description_c && (
+                  <p className="text-sm text-gray-600 mt-1">{assignment.description_c}</p>
                 )}
               </div>
               <div className="flex items-center gap-2 ml-4">
@@ -66,7 +63,7 @@ const AssignmentItem = ({ assignment, onUpdate, onDelete }) => {
                   <ApperIcon name="Edit2" size={16} />
                 </button>
                 <button
-                  onClick={() => onDelete(assignment.id)}
+onClick={() => onDelete(assignment.Id)}
                   className="p-1.5 rounded-lg text-red-500 hover:bg-red-50 transition-colors duration-200"
                 >
                   <ApperIcon name="Trash2" size={16} />
@@ -75,35 +72,37 @@ const AssignmentItem = ({ assignment, onUpdate, onDelete }) => {
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
-              {course && (
+{course && (
                 <Badge
                   className="border-l-4"
-                  style={{ borderLeftColor: course.color }}
+                  style={{ borderLeftColor: course.color_c }}
                 >
-                  {course.code}
+                  {course.code_c}
                 </Badge>
               )}
               <Badge variant={getDateBadgeVariant()}>
                 <ApperIcon name="Calendar" size={12} className="mr-1" />
                 {getDateBadgeLabel()}
               </Badge>
-              <PriorityIndicator priority={assignment.priority} />
-              {assignment.totalPoints !== null && (
+              <PriorityIndicator priority={assignment.priority_c} />
+              {assignment.total_points_c !== null && (
                 <Badge variant="info">
-                  {assignment.earnedPoints !== null 
-                    ? `${assignment.earnedPoints}/${assignment.totalPoints} pts`
-                    : `${assignment.totalPoints} pts`
+                  {assignment.earned_points_c !== null 
+                    ? `${assignment.earned_points_c}/${assignment.total_points_c} pts`
+                    : `${assignment.total_points_c} pts`
                   }
                 </Badge>
               )}
             </div>
           </div>
         </div>
+</div>
       </motion.div>
 
       {showEditModal && (
         <EditAssignmentModal
           assignment={assignment}
+          courses={courses}
           onClose={() => setShowEditModal(false)}
           onSave={onUpdate}
           onDelete={onDelete}

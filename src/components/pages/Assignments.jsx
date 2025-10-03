@@ -1,61 +1,94 @@
-import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import Button from "@/components/atoms/Button";
-import Select from "@/components/atoms/Select";
+import React, { useEffect, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import { courseService } from "@/services/api/courseService";
+import { assignmentService } from "@/services/api/assignmentService";
 import ApperIcon from "@/components/ApperIcon";
-import AssignmentItem from "@/components/organisms/AssignmentItem";
-import AddAssignmentModal from "@/components/organisms/AddAssignmentModal";
 import Empty from "@/components/ui/Empty";
-import { storage } from "@/utils/storage";
+import Loading from "@/components/ui/Loading";
+import Courses from "@/components/pages/Courses";
+import AddAssignmentModal from "@/components/organisms/AddAssignmentModal";
+import AssignmentItem from "@/components/organisms/AssignmentItem";
+import Select from "@/components/atoms/Select";
+import Button from "@/components/atoms/Button";
 import { isOverdue } from "@/utils/dateUtils";
 
 const Assignments = () => {
-  const [assignments, setAssignments] = useState([]);
+const [assignments, setAssignments] = useState([]);
   const [courses, setCourses] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
   const [filterCourse, setFilterCourse] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
   const [filterPriority, setFilterPriority] = useState("all");
 
-  useEffect(() => {
-    setAssignments(storage.getAssignments());
-    setCourses(storage.getCourses());
+useEffect(() => {
+    const loadData = async () => {
+      setLoading(true);
+      const [assignmentsData, coursesData] = await Promise.all([
+        assignmentService.getAllAssignments(),
+        courseService.getAllCourses()
+      ]);
+      setAssignments(assignmentsData);
+      setCourses(coursesData);
+      setLoading(false);
+    };
+    loadData();
   }, []);
 
-  const handleAddAssignment = (updatedAssignments) => {
-    setAssignments(updatedAssignments);
-  };
-
-  const handleUpdateAssignment = (id, updatedData) => {
-    const updatedAssignments = assignments.map(a =>
-      a.Id === id ? { ...a, ...updatedData } : a
-    );
-    storage.setAssignments(updatedAssignments);
-    setAssignments(updatedAssignments);
-  };
-
-  const handleDeleteAssignment = (id) => {
-    const updatedAssignments = assignments.filter(a => a.Id !== id);
-    storage.setAssignments(updatedAssignments);
-    setAssignments(updatedAssignments);
-  };
-
-  const filteredAssignments = assignments.filter(assignment => {
-    if (filterCourse !== "all" && assignment.courseId !== filterCourse) return false;
-    if (filterStatus !== "all") {
-      if (filterStatus === "completed" && !assignment.completed) return false;
-      if (filterStatus === "pending" && assignment.completed) return false;
-      if (filterStatus === "overdue" && (!isOverdue(assignment.dueDate) || assignment.completed)) return false;
+const handleAddAssignment = async (assignmentData) => {
+    const newAssignment = await assignmentService.createRecords(assignmentData);
+    if (newAssignment) {
+      setAssignments([...assignments, newAssignment]);
     }
-    if (filterPriority !== "all" && assignment.priority !== filterPriority) return false;
+  };
+
+  const handleUpdateAssignment = async (id, updatedData) => {
+    const updated = await assignmentService.updateRecords(id, updatedData);
+    if (updated) {
+      const updatedAssignments = assignments.map(a =>
+        a.Id === id ? { ...a, ...updated } : a
+      );
+      setAssignments(updatedAssignments);
+    }
+  };
+
+  const handleDeleteAssignment = async (id) => {
+    const success = await assignmentService.deleteRecords(id);
+    if (success) {
+      setAssignments(assignments.filter(a => a.Id !== id));
+    }
+  };
+
+const filteredAssignments = assignments.filter(assignment => {
+    const courseIdMatch = assignment.course_id_c?.Id;
+    if (filterCourse !== "all" && courseIdMatch && courseIdMatch.toString() !== filterCourse) return false;
+    if (filterStatus !== "all") {
+      if (filterStatus === "completed" && !assignment.completed_c) return false;
+      if (filterStatus === "pending" && assignment.completed_c) return false;
+      if (filterStatus === "overdue" && (!isOverdue(assignment.due_date_c) || assignment.completed_c)) return false;
+    }
+    if (filterPriority !== "all" && assignment.priority_c !== filterPriority) return false;
     return true;
   });
-
-  const sortedAssignments = [...filteredAssignments].sort((a, b) => {
-    if (a.completed !== b.completed) return a.completed ? 1 : -1;
-    return new Date(a.dueDate) - new Date(b.dueDate);
+const sortedAssignments = [...filteredAssignments].sort((a, b) => {
+    if (a.completed_c !== b.completed_c) return a.completed_c ? 1 : -1;
+    return new Date(a.due_date_c) - new Date(b.due_date_c);
   });
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="flex flex-col items-center gap-4">
+          <div className="relative w-16 h-16">
+            <div className="absolute inset-0 border-4 border-primary-200 rounded-full"></div>
+            <div className="absolute inset-0 border-4 border-primary-600 rounded-full border-t-transparent animate-spin"></div>
+          </div>
+          <p className="text-gray-600 font-medium">Loading...</p>
+        </div>
+</div>
+      </div>
+    );
+  }
   if (courses.length === 0) {
     return (
       <Empty
@@ -87,9 +120,9 @@ const Assignments = () => {
             <label className="block text-sm font-medium text-gray-700 mb-1.5">Filter by Course</label>
             <Select value={filterCourse} onChange={(e) => setFilterCourse(e.target.value)}>
               <option value="all">All Courses</option>
-              {courses.map(course => (
-                <option key={course.id} value={course.id}>
-                  {course.code} - {course.name}
+{courses.map(course => (
+                <option key={course.Id} value={course.Id}>
+                  {course.code_c} - {course.name_c}
                 </option>
               ))}
             </Select>
@@ -131,10 +164,11 @@ const Assignments = () => {
       ) : (
         <div className="space-y-3">
           <AnimatePresence>
-            {sortedAssignments.map((assignment) => (
+{sortedAssignments.map((assignment) => (
               <AssignmentItem
                 key={assignment.Id}
                 assignment={assignment}
+                courses={courses}
                 onUpdate={handleUpdateAssignment}
                 onDelete={handleDeleteAssignment}
               />
@@ -143,10 +177,11 @@ const Assignments = () => {
         </div>
       )}
 
-      {showAddModal && (
+{showAddModal && (
         <AddAssignmentModal
           onClose={() => setShowAddModal(false)}
           onSave={handleAddAssignment}
+          courses={courses}
         />
       )}
     </div>

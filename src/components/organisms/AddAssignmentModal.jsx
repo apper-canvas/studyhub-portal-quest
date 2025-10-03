@@ -1,37 +1,36 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { toast } from "react-toastify";
-import Button from "@/components/atoms/Button";
-import ApperIcon from "@/components/ApperIcon";
-import FormField from "@/components/molecules/FormField";
-import SelectField from "@/components/molecules/SelectField";
-import { storage } from "@/utils/storage";
 import { format } from "date-fns";
+import ApperIcon from "@/components/ApperIcon";
+import SelectField from "@/components/molecules/SelectField";
+import FormField from "@/components/molecules/FormField";
+import Select from "@/components/atoms/Select";
+import Button from "@/components/atoms/Button";
 
-const AddAssignmentModal = ({ onClose, onSave }) => {
-  const courses = storage.getCourses();
+const AddAssignmentModal = ({ onClose, onSave, courses }) => {
   
-  const [formData, setFormData] = useState({
-    courseId: courses.length > 0 ? courses[0].id : "",
-    title: "",
-    description: "",
-    dueDate: format(new Date(), "yyyy-MM-dd"),
-    priority: "medium",
-    status: "todo",
-    totalPoints: null,
-    earnedPoints: null,
+const [formData, setFormData] = useState({
+    course_id_c: courses.length > 0 ? courses[0].Id : "",
+    title_c: "",
+    description_c: "",
+    due_date_c: format(new Date(), "yyyy-MM-dd"),
+    priority_c: "medium",
+    status_c: "todo",
+    total_points_c: null,
+    earned_points_c: null,
   });
 
   const [errors, setErrors] = useState({});
 
-  const validate = () => {
+const validate = () => {
     const newErrors = {};
-    if (!formData.courseId) newErrors.courseId = "Please select a course";
-    if (!formData.title.trim()) newErrors.title = "Assignment title is required";
-    if (!formData.dueDate) newErrors.dueDate = "Due date is required";
+    if (!formData.course_id_c) newErrors.course_id_c = "Please select a course";
+    if (!formData.title_c.trim()) newErrors.title_c = "Assignment title is required";
+    if (!formData.due_date_c) newErrors.due_date_c = "Due date is required";
     return newErrors;
   };
 
-  const handleSubmit = (e) => {
+const handleSubmit = async (e) => {
     e.preventDefault();
     const newErrors = validate();
     
@@ -40,23 +39,7 @@ const AddAssignmentModal = ({ onClose, onSave }) => {
       return;
     }
 
-    const assignments = storage.getAssignments();
-    const maxId = assignments.length > 0 ? Math.max(...assignments.map(a => a.Id)) : 0;
-    
-    const newAssignment = {
-      Id: maxId + 1,
-      id: `assignment-${maxId + 1}`,
-      ...formData,
-      completed: false,
-      earnedPoints: formData.earnedPoints ? parseFloat(formData.earnedPoints) : null,
-      totalPoints: formData.totalPoints ? parseFloat(formData.totalPoints) : null,
-    };
-
-    const updatedAssignments = [...assignments, newAssignment];
-    storage.setAssignments(updatedAssignments);
-    
-    toast.success("Assignment added successfully!");
-    onSave(updatedAssignments);
+    await onSave(formData);
     onClose();
   };
 
@@ -81,51 +64,51 @@ const AddAssignmentModal = ({ onClose, onSave }) => {
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
-          <SelectField
+<SelectField
             label="Course"
-            value={formData.courseId}
-            onChange={(e) => handleChange("courseId", e.target.value)}
-            error={errors.courseId}
+            value={formData.course_id_c}
+            onChange={(e) => handleChange("course_id_c", e.target.value)}
+            error={errors.course_id_c}
           >
             <option value="">Select a course</option>
-            {courses.map(course => (
-              <option key={course.id} value={course.id}>
-                {course.code} - {course.name}
+{courses.map(course => (
+              <option key={course.Id} value={course.Id}>
+                {course.code_c} - {course.name_c}
               </option>
             ))}
           </SelectField>
 
-          <FormField
+<FormField
             label="Assignment Title"
-            value={formData.title}
-            onChange={(e) => handleChange("title", e.target.value)}
+            value={formData.title_c}
+            onChange={(e) => handleChange("title_c", e.target.value)}
             placeholder="e.g., Chapter 5 Quiz"
-            error={errors.title}
+            error={errors.title_c}
           />
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">Description (Optional)</label>
-            <textarea
-              value={formData.description}
-              onChange={(e) => handleChange("description", e.target.value)}
+<textarea
+              value={formData.description_c}
+onChange={(e) => handleChange("description_c", e.target.value)}
               placeholder="Add notes about this assignment..."
               rows={3}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 bg-white text-gray-900"
             />
-          </div>
+</div>
 
           <FormField
             label="Due Date"
             type="date"
-            value={formData.dueDate}
-            onChange={(e) => handleChange("dueDate", e.target.value)}
-            error={errors.dueDate}
+            value={formData.due_date_c}
+            onChange={(e) => handleChange("due_date_c", e.target.value)}
+            error={errors.due_date_c}
           />
 
           <SelectField
             label="Priority"
-            value={formData.priority}
-            onChange={(e) => handleChange("priority", e.target.value)}
+            value={formData.priority_c}
+            onChange={(e) => handleChange("priority_c", e.target.value)}
           >
             <option value="low">Low</option>
             <option value="medium">Medium</option>
@@ -134,8 +117,8 @@ const AddAssignmentModal = ({ onClose, onSave }) => {
 
           <SelectField
             label="Status"
-            value={formData.status}
-            onChange={(e) => handleChange("status", e.target.value)}
+            value={formData.status_c}
+            onChange={(e) => handleChange("status_c", e.target.value)}
           >
             <option value="todo">To Do</option>
             <option value="in-progress">In Progress</option>
@@ -148,9 +131,8 @@ const AddAssignmentModal = ({ onClose, onSave }) => {
               type="number"
               step="0.1"
               min="0"
-              value={formData.totalPoints || ""}
-              onChange={(e) => handleChange("totalPoints", e.target.value)}
-              placeholder="100"
+              value={formData.total_points_c || ""}
+              onChange={(e) => handleChange("total_points_c", e.target.value)}
             />
 
             <FormField
@@ -158,12 +140,10 @@ const AddAssignmentModal = ({ onClose, onSave }) => {
               type="number"
               step="0.1"
               min="0"
-              value={formData.earnedPoints || ""}
-              onChange={(e) => handleChange("earnedPoints", e.target.value)}
-              placeholder="95"
+              value={formData.earned_points_c || ""}
+              onChange={(e) => handleChange("earned_points_c", e.target.value)}
             />
           </div>
-
           <div className="flex gap-3 pt-4">
             <Button type="button" variant="outline" onClick={onClose} className="flex-1">
               Cancel

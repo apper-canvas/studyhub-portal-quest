@@ -1,38 +1,73 @@
-import { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import StatCard from "@/components/molecules/StatCard";
-import Card from "@/components/atoms/Card";
-import Badge from "@/components/atoms/Badge";
-import Button from "@/components/atoms/Button";
+import { courseService } from "@/services/api/courseService";
+import { assignmentService } from "@/services/api/assignmentService";
 import ApperIcon from "@/components/ApperIcon";
+import StatCard from "@/components/molecules/StatCard";
 import Empty from "@/components/ui/Empty";
-import { storage } from "@/utils/storage";
-import { calculateGPA, calculateCourseGrade, gradeToLetter } from "@/utils/calculations";
-import { getUpcomingAssignments, getOverdueAssignments, formatDateShort } from "@/utils/dateUtils";
+import Loading from "@/components/ui/Loading";
+import Assignments from "@/components/pages/Assignments";
+import Badge from "@/components/atoms/Badge";
+import Card from "@/components/atoms/Card";
+import Button from "@/components/atoms/Button";
+import { formatDateShort, getOverdueAssignments, getUpcomingAssignments } from "@/utils/dateUtils";
+import { calculateCourseGrade, calculateGPA, gradeToLetter } from "@/utils/calculations";
 
 const Dashboard = () => {
   const navigate = useNavigate();
-  const [courses, setCourses] = useState([]);
+const [courses, setCourses] = useState([]);
   const [assignments, setAssignments] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    setCourses(storage.getCourses());
-    setAssignments(storage.getAssignments());
+useEffect(() => {
+    const loadData = async () => {
+      setLoading(true);
+      const [coursesData, assignmentsData] = await Promise.all([
+        courseService.getAllCourses(),
+        assignmentService.getAllAssignments()
+      ]);
+      setCourses(coursesData);
+      setAssignments(assignmentsData);
+      setLoading(false);
+    };
+    loadData();
   }, []);
 
-  const gpa = calculateGPA(courses, assignments);
+const gpa = calculateGPA(courses, assignments);
   const upcomingAssignments = getUpcomingAssignments(assignments, 7);
   const overdueAssignments = getOverdueAssignments(assignments);
-  const totalCredits = courses.reduce((sum, c) => sum + c.credits, 0);
+  const totalCredits = courses.reduce((sum, c) => sum + (c.credits_c || 0), 0);
 
-  const handleToggleComplete = (assignmentId) => {
-    const updatedAssignments = assignments.map(a =>
-      a.Id === assignmentId ? { ...a, completed: !a.completed } : a
-    );
-    storage.setAssignments(updatedAssignments);
-    setAssignments(updatedAssignments);
+const handleToggleComplete = async (assignmentId) => {
+    const assignment = assignments.find(a => a.Id === assignmentId);
+    if (!assignment) return;
+
+    const updatedAssignment = await assignmentService.updateRecords(assignmentId, {
+      completed_c: !assignment.completed_c
+    });
+
+    if (updatedAssignment) {
+      const updatedAssignments = assignments.map(a =>
+        a.Id === assignmentId ? { ...a, completed_c: !a.completed_c } : a
+      );
+      setAssignments(updatedAssignments);
+    }
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="flex flex-col items-center gap-4">
+          <div className="relative w-16 h-16">
+            <div className="absolute inset-0 border-4 border-primary-200 rounded-full"></div>
+            <div className="absolute inset-0 border-4 border-primary-600 rounded-full border-t-transparent animate-spin"></div>
+          </div>
+          <p className="text-gray-600 font-medium">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   const container = {
     hidden: { opacity: 0 },
@@ -75,7 +110,7 @@ const Dashboard = () => {
         className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
       >
         <motion.div variants={item}>
-          <StatCard
+<StatCard
             title="Current GPA"
             value={gpa !== null ? gpa.toFixed(2) : "N/A"}
             icon="Award"
@@ -138,8 +173,8 @@ const Dashboard = () => {
               </div>
             ) : (
               <div className="space-y-3">
-                {upcomingAssignments.slice(0, 5).map((assignment) => {
-                  const course = courses.find(c => c.id === assignment.courseId);
+{upcomingAssignments.slice(0, 5).map((assignment) => {
+                  const course = courses.find(c => c.id_c === assignment.course_id_c?.Id || c.Id === assignment.course_id_c?.Id);
                   return (
                     <div
                       key={assignment.Id}
@@ -147,25 +182,25 @@ const Dashboard = () => {
                     >
                       <input
                         type="checkbox"
-                        checked={assignment.completed}
+                        checked={assignment.completed_c}
                         onChange={() => handleToggleComplete(assignment.Id)}
                         className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary cursor-pointer"
                       />
                       <div className="flex-1 min-w-0">
-                        <p className={`font-medium text-gray-900 truncate ${assignment.completed ? "line-through text-gray-400" : ""}`}>
-                          {assignment.title}
+                        <p className={`font-medium text-gray-900 truncate ${assignment.completed_c ? "line-through text-gray-400" : ""}`}>
+                          {assignment.title_c}
                         </p>
                         <div className="flex items-center gap-2 mt-1">
                           {course && (
                             <Badge
                               className="border-l-4"
-                              style={{ borderLeftColor: course.color }}
+                              style={{ borderLeftColor: course.color_c }}
                             >
-                              {course.code}
+                              {course.code_c}
                             </Badge>
                           )}
                           <span className="text-sm text-gray-500">
-                            {formatDateShort(assignment.dueDate)}
+                            {formatDateShort(assignment.due_date_c)}
                           </span>
                         </div>
                       </div>
@@ -192,8 +227,10 @@ const Dashboard = () => {
             </div>
 
             <div className="space-y-3">
-              {courses.slice(0, 5).map((course) => {
-                const courseAssignments = assignments.filter(a => a.courseId === course.id);
+{courses.slice(0, 5).map((course) => {
+                const courseAssignments = assignments.filter(a => 
+                  a.course_id_c?.Id === course.Id || a.course_id_c?.Id === course.id_c
+                );
                 const grade = calculateCourseGrade(courseAssignments);
                 const letterGrade = grade !== null ? gradeToLetter(grade) : "N/A";
 
@@ -205,11 +242,11 @@ const Dashboard = () => {
                   >
                     <div
                       className="w-2 h-12 rounded-full"
-                      style={{ backgroundColor: course.color }}
+                      style={{ backgroundColor: course.color_c }}
                     />
                     <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-gray-900">{course.code}</p>
-                      <p className="text-sm text-gray-600 truncate">{course.name}</p>
+                      <p className="font-semibold text-gray-900">{course.code_c}</p>
+                      <p className="text-sm text-gray-600 truncate">{course.name_c}</p>
                     </div>
                     <div className="text-right">
                       <p className="text-2xl font-bold text-gray-900">{letterGrade}</p>
@@ -225,7 +262,7 @@ const Dashboard = () => {
         </motion.div>
       </div>
 
-      {overdueAssignments.length > 0 && (
+{overdueAssignments.length > 0 && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
